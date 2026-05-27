@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Provider, LotteryResponse, LotteryResult, TrackedPrediction } from "../types";
+import { Provider, LotteryResponse, LotteryResult, TrackedPrediction, PredictionAlgorithm } from "../types";
 import { HistoryTable } from "./HistoryTable";
 import { AnalyticsChart } from "./AnalyticsChart";
 import { PredictionEngine } from "./PredictionEngine";
 import { PredictionHistoryTable } from "./PredictionHistoryTable";
 import { WinRatioChart } from "./WinRatioChart";
 import { generatePrediction, getNextIssue } from "../lib/prediction";
-import { BarChart3, Clock, RefreshCw, Zap, Menu, ArrowLeft } from "lucide-react";
+import { BarChart3, RefreshCw, Menu, ArrowLeft } from "lucide-react";
 import { cn } from "../lib/utils";
+import { getTheme } from "../lib/theme";
 
 const PROVIDERS: { id: Provider; name: string }[] = [
   { id: "ck", name: "CK 30S" },
@@ -25,6 +26,9 @@ export function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [predictionHistory, setPredictionHistory] = useState<TrackedPrediction[]>([]);
   const [timeLeft, setTimeLeft] = useState(30);
+  const [algorithm, setAlgorithm] = useState<PredictionAlgorithm>("Frequency");
+
+  const theme = getTheme(activeProvider);
 
   const nextTargetIssue = data.length > 0 ? getNextIssue(data[0].issueNumber) : "";
   const pendingForActive = predictionHistory.find(
@@ -68,10 +72,21 @@ export function Dashboard() {
                return p;
            });
            
-           // Insert new pending
-           const existingPending = updated.find(p => String(p.issueNumber) === String(nextIssue) && p.provider === provider);
-           if (!existingPending) {
-               const newPredictionObj = generatePrediction(list);
+           // Insert or update pending
+           const existingPendingIndex = updated.findIndex(p => String(p.issueNumber) === String(nextIssue) && p.provider === provider);
+           const newPredictionObj = generatePrediction(list, algorithm);
+           
+           if (existingPendingIndex >= 0) {
+               if (newPredictionObj && updated[existingPendingIndex].status === 'PENDING') {
+                   // Update the existing pending prediction in case algorithm changed
+                   updated[existingPendingIndex] = {
+                       ...updated[existingPendingIndex],
+                       isSmall: newPredictionObj.isSmall,
+                       predictedNumber: newPredictionObj.number,
+                       confidence: newPredictionObj.confidence
+                   };
+               }
+           } else {
                if (newPredictionObj) {
                  updated = [{
                      issueNumber: nextIssue,
@@ -116,6 +131,12 @@ export function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeProvider]);
 
+  // Separate effect to re-run prediction without resetting the timer
+  useEffect(() => {
+    fetchData(activeProvider);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [algorithm]);
+
   return (
     <div className="flex h-screen w-full flex-col bg-[#0a0a0c] text-[#e2e2e7] font-sans overflow-hidden select-none">
       {/* Header */}
@@ -133,16 +154,16 @@ export function Dashboard() {
             </button>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center font-bold text-white shadow-lg shadow-blue-600/20 shrink-0">
+            <div className={cn("w-8 h-8 rounded-md flex items-center justify-center font-bold text-white shadow-lg shrink-0", theme.primaryBg, theme.shadow)}>
               P
             </div>
             <h1 className="text-lg sm:text-xl font-semibold tracking-tight whitespace-nowrap">
-              PREDICT<span className="text-blue-500">PRO</span>
+              PREDICT<span className={theme.textAccent}>PRO</span>
               <span className="text-xs font-mono opacity-50 ml-2 uppercase text-gray-400 hidden xl:inline">v2.4.0-STABLE</span>
             </h1>
           </div>
           <nav className="hidden lg:flex gap-1 ml-4 xl:ml-8">
-            <button className="px-4 py-2 bg-[#23232a] text-sm rounded-md border border-[#3b3b45] text-blue-400">Terminal</button>
+            <button className={cn("px-4 py-2 bg-[#23232a] text-sm rounded-md border border-[#3b3b45]", theme.textAccentLight)}>Terminal</button>
             <button className="px-4 py-2 hover:bg-[#1c1c24] text-sm rounded-md transition-colors text-gray-400 hover:text-gray-200">Architecture</button>
             <button className="px-4 py-2 hover:bg-[#1c1c24] text-sm rounded-md transition-colors text-gray-400 hover:text-gray-200">Security</button>
           </nav>
@@ -192,7 +213,7 @@ export function Dashboard() {
                       className={cn(
                         "p-4 rounded-lg cursor-pointer transition-colors",
                         isActive 
-                          ? "bg-[#1c1c24] border-l-4 border-blue-500 ring-1 ring-white/5 shadow-xl" 
+                          ? cn("bg-[#1c1c24] border-l-4 ring-1 ring-white/5 shadow-xl", theme.borderActive)
                           : "bg-[#111116] border border-[#2d2d33] hover:bg-[#16161d] opacity-70"
                       )}
                     >
@@ -200,7 +221,7 @@ export function Dashboard() {
                         <span className={cn("font-bold text-sm", isActive ? "text-white" : "text-gray-300")}>{provider.name}</span>
                         <span className={cn(
                           "text-[10px] px-1.5 rounded",
-                          isActive ? "bg-blue-500/20 text-blue-400" : "bg-gray-700 text-gray-300"
+                          isActive ? cn(theme.bgLight, theme.textAccentLight) : "bg-gray-700 text-gray-300"
                         )}>30s</span>
                       </div>
                       <p className="text-[11px] opacity-60 mb-2 text-gray-400 font-mono">
@@ -211,7 +232,7 @@ export function Dashboard() {
                       {isActive && (
                         <div className="flex items-center gap-2">
                           <div className="flex-1 h-1 bg-[#2d2d33] rounded-full overflow-hidden">
-                            <div className={cn("h-full bg-blue-500 transition-all", loading ? "w-0" : "w-[100%]")}></div>
+                            <div className={cn("h-full transition-all", theme.primaryBg, loading ? "w-0" : "w-[100%]")}></div>
                           </div>
                           <span className="text-[10px] font-mono text-gray-400">{loading ? '0%' : '100%'}</span>
                         </div>
@@ -236,7 +257,15 @@ export function Dashboard() {
           {/* Top Dashboard: Active Prediction */}
           <div className="p-8 grid gap-6 xl:grid-cols-12 shrink-0">
             <div className="xl:col-span-8 group">
-              <PredictionEngine data={data} prediction={derivedPrediction} isPredicting={isPredicting || loading} timeLeft={timeLeft} />
+              <PredictionEngine 
+                data={data} 
+                prediction={derivedPrediction} 
+                isPredicting={isPredicting || loading} 
+                timeLeft={timeLeft} 
+                algorithm={algorithm} 
+                onAlgorithmChange={setAlgorithm} 
+                theme={theme}
+              />
             </div>
             
             <div className="xl:col-span-4 h-full">
@@ -248,11 +277,11 @@ export function Dashboard() {
                 <div className="flex-1 min-h-[200px] flex flex-col gap-6">
                   <div className="flex-1 flex flex-col min-h-[120px]">
                     <span className="text-[10px] text-gray-500 uppercase tracking-widest mb-4 font-bold">Number Frequency</span>
-                    <AnalyticsChart data={data} />
+                    <AnalyticsChart data={data} themeHex={theme.hex} />
                   </div>
                   <div className="flex-1 flex flex-col min-h-[120px] border-t border-[#2d2d33] pt-4">
                     <span className="text-[10px] text-gray-500 uppercase tracking-widest mb-4 font-bold">Cumulative Win Ratio</span>
-                    <WinRatioChart data={predictionHistory.filter(p => p.provider === activeProvider)} />
+                    <WinRatioChart data={predictionHistory.filter(p => p.provider === activeProvider)} themeHex={theme.hex} />
                   </div>
                 </div>
               </div>
@@ -297,7 +326,7 @@ export function Dashboard() {
                 </div>
               </div>
               <div className="flex-1 overflow-auto h-[300px] xl:h-auto">
-                <PredictionHistoryTable data={predictionHistory} provider={activeProvider} />
+                <PredictionHistoryTable data={predictionHistory} provider={activeProvider} theme={theme} />
               </div>
             </div>
           </div>
@@ -312,8 +341,8 @@ export function Dashboard() {
           <span className="hidden sm:inline">Mode: Read/Write</span>
         </div>
         <div className="flex gap-4 items-center">
-          <span className="text-blue-500/60 hidden sm:inline">System Latency: {Math.floor(Math.random() * 20 + 5)}ms</span>
-          <span className="bg-blue-600 text-white px-2 rounded-sm font-sans font-medium uppercase tracking-wider">v2.4.0</span>
+          <span className="text-gray-500/60 hidden sm:inline">System Latency: {Math.floor(Math.random() * 20 + 5)}ms</span>
+          <span className={cn("text-white px-2 rounded-sm font-sans font-medium uppercase tracking-wider", theme.primaryBg)}>v2.4.0</span>
         </div>
       </footer>
     </div>

@@ -20,6 +20,8 @@ export interface LotteryResponse {
 
 export type Provider = "ck" | "bigwin" | "sixlottery";
 
+export type PredictionAlgorithm = 'Frequency' | 'Moving Average' | 'Pattern Recognition' | 'Logic Pattern';
+
 export interface TrackedPrediction {
   issueNumber: string;
   provider: Provider;

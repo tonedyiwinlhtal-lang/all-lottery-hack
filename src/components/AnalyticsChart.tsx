@@ -6,9 +6,10 @@ import { LotteryResult } from '../types';
 
 interface ChartProps {
   data: LotteryResult[];
+  themeHex?: string;
 }
 
-export function AnalyticsChart({ data }: ChartProps) {
+export function AnalyticsChart({ data, themeHex = '#3b82f6' }: ChartProps) {
   const chartData = useMemo(() => {
     // Reverse data to show oldest to newest left to right
     return [...data].reverse().map((item) => ({
@@ -42,16 +43,16 @@ export function AnalyticsChart({ data }: ChartProps) {
           />
           <Tooltip 
             contentStyle={{ backgroundColor: '#1c1c24', border: '1px solid #2d2d33', borderRadius: '0.5rem', color: '#e2e2e7', fontSize: '12px', fontFamily: 'monospace' }}
-            itemStyle={{ color: '#3b82f6' }}
+            itemStyle={{ color: themeHex }}
             cursor={{ stroke: '#2d2d33', strokeWidth: 1, strokeDasharray: '4 4' }}
           />
           <Line 
             type="monotone" 
             dataKey="number" 
-            stroke="#3b82f6" 
+            stroke={themeHex} 
             strokeWidth={3}
-            activeDot={{ r: 6, fill: '#60a5fa', stroke: '#1e3a8a', strokeWidth: 2 }}
-            dot={{ r: 4, fill: '#111116', stroke: '#3b82f6', strokeWidth: 2 }}
+            activeDot={{ r: 6, fill: themeHex, stroke: '#111116', strokeWidth: 2 }}
+            dot={{ r: 4, fill: '#111116', stroke: themeHex, strokeWidth: 2 }}
           />
         </LineChart>
       </ResponsiveContainer>

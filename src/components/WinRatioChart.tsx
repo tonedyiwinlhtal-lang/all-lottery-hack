@@ -12,9 +12,10 @@ import { TrackedPrediction } from '../types';
 
 interface WinRatioChartProps {
   data: TrackedPrediction[];
+  themeHex?: string;
 }
 
-export function WinRatioChart({ data }: WinRatioChartProps) {
+export function WinRatioChart({ data, themeHex = '#10b981' }: WinRatioChartProps) {
   const chartData = useMemo(() => {
     let wins = 0;
     let resolved = 0;
@@ -66,7 +67,7 @@ export function WinRatioChart({ data }: WinRatioChartProps) {
           />
           <Tooltip 
             contentStyle={{ backgroundColor: '#1c1c24', border: '1px solid #2d2d33', borderRadius: '0.5rem', color: '#e2e2e7', fontSize: '12px', fontFamily: 'monospace' }}
-            itemStyle={{ color: '#10b981' }}
+            itemStyle={{ color: themeHex }}
             cursor={{ stroke: '#2d2d33', strokeWidth: 1, strokeDasharray: '4 4' }}
             formatter={(value: number) => [`${value}%`, 'Win Rate']}
             labelFormatter={(label) => `Issue ...${label}`}
@@ -74,10 +75,10 @@ export function WinRatioChart({ data }: WinRatioChartProps) {
           <Line 
             type="stepAfter" 
             dataKey="winRate" 
-            stroke="#10b981" 
+            stroke={themeHex} 
             strokeWidth={2}
-            activeDot={{ r: 6, fill: '#10b981', stroke: '#064e3b', strokeWidth: 2 }}
-            dot={{ r: 3, fill: '#111116', stroke: '#10b981', strokeWidth: 2 }}
+            activeDot={{ r: 6, fill: themeHex, stroke: '#111116', strokeWidth: 2 }}
+            dot={{ r: 3, fill: '#111116', stroke: themeHex, strokeWidth: 2 }}
           />
         </LineChart>
       </ResponsiveContainer>

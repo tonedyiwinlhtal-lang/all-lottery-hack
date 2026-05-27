@@ -1,24 +1,60 @@
 import { useState, useEffect } from 'react';
-import { LotteryResult } from '../types';
+import { LotteryResult, PredictionAlgorithm } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { Cpu, Target, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Cpu, Target, CheckCircle2, AlertCircle, ChevronDown } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { getNextIssue } from '../lib/prediction';
+import { ThemeColors } from '../lib/theme';
+
+const ALGORITHMS: PredictionAlgorithm[] = ['Frequency', 'Moving Average', 'Pattern Recognition', 'Logic Pattern'];
 
 interface PredictionEngineProps {
   data: LotteryResult[];
   prediction: { number: number; confidence: number; colours: string[], isSmall: boolean } | null;
   isPredicting: boolean;
   timeLeft: number;
+  algorithm: PredictionAlgorithm;
+  onAlgorithmChange: (alg: PredictionAlgorithm) => void;
+  theme: ThemeColors;
 }
 
-export function PredictionEngine({ data, prediction, isPredicting, timeLeft }: PredictionEngineProps) {
+export function PredictionEngine({ data, prediction, isPredicting, timeLeft, algorithm, onAlgorithmChange, theme }: PredictionEngineProps) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const latestIssue = data.length > 0 ? getNextIssue(data[0].issueNumber) : "WAITING...";
 
   return (
-    <div className="bg-gradient-to-br from-[#1c1c24] to-[#111116] rounded-2xl border border-white/5 p-8 relative overflow-hidden shadow-2xl shadow-blue-500/5 h-full flex flex-col justify-center min-h-[300px]">
-      <div className="absolute top-0 right-0 p-4">
-        <span className="px-3 py-1 bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs rounded-full font-mono">
+    <div className={cn("bg-gradient-to-br from-[#1c1c24] to-[#111116] rounded-2xl border border-white/5 p-8 relative overflow-hidden shadow-2xl h-full flex flex-col justify-center min-h-[300px]", theme.shadowSoft)}>
+      <div className="absolute top-0 right-0 p-4 flex gap-2 z-10">
+        <div className="relative">
+          <button 
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="px-3 py-1 bg-gray-500/10 hover:bg-gray-500/20 transition-colors border border-gray-500/30 text-gray-400 text-xs rounded-full font-mono flex items-center gap-1"
+          >
+            {algorithm}
+            <ChevronDown className="w-3 h-3" />
+          </button>
+          
+          {isDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-[#1c1c24] border border-[#2d2d33] rounded-lg shadow-xl overflow-hidden py-1 z-50">
+              {ALGORITHMS.map(alg => (
+                <button
+                  key={alg}
+                  onClick={() => {
+                    onAlgorithmChange(alg);
+                    setIsDropdownOpen(false);
+                  }}
+                  className={cn(
+                    "w-full text-left px-4 py-2 text-xs font-mono transition-colors",
+                    alg === algorithm ? cn(theme.textAccentLight, theme.bgLight) : "text-gray-400 hover:text-white hover:bg-white/5"
+                  )}
+                >
+                  {alg}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <span className={cn("px-3 py-1 border text-xs rounded-full font-mono", theme.bgLight, theme.borderSoft, theme.textAccentLight)}>
           ISSUE: {latestIssue}
         </span>
       </div>
@@ -33,12 +69,12 @@ export function PredictionEngine({ data, prediction, isPredicting, timeLeft }: P
             className="flex flex-col items-center justify-center gap-4 text-center py-12"
           >
             <div className="relative flex h-16 w-16 items-center justify-center">
-              <div className="absolute h-full w-full animate-spin rounded-full border-b-2 border-l-2 border-blue-500"></div>
-              <div className="absolute h-12 w-12 animate-spin rounded-full border-r-2 border-t-2 border-indigo-400 opacity-70" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
-              <Target className="h-6 w-6 text-blue-400 animate-pulse" />
+              <div className={cn("absolute h-full w-full animate-spin rounded-full border-b-2 border-l-2", theme.borderActive)}></div>
+              <div className={cn("absolute h-12 w-12 animate-spin rounded-full border-r-2 border-t-2 opacity-70", theme.spinnerSecondary)} style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+              <Target className={cn("h-6 w-6 animate-pulse", theme.textAccentLight)} />
             </div>
             <div>
-              <p className="text-lg font-medium text-blue-400 tracking-wide">CALCULATING PROBABILITIES</p>
+              <p className={cn("text-lg font-medium tracking-wide", theme.textAccentLight)}>CALCULATING PROBABILITIES</p>
               <p className="text-sm font-mono text-gray-500 mt-2">Processing real-time sequence data...</p>
             </div>
           </motion.div>
@@ -56,7 +92,7 @@ export function PredictionEngine({ data, prediction, isPredicting, timeLeft }: P
               <h3 className="text-4xl sm:text-6xl font-light tracking-tighter text-white">
                 PREDICTION: <span className={cn(
                   "font-bold",
-                  prediction.isSmall ? "text-[#e2e2e7]" : "text-blue-400" 
+                  prediction.isSmall ? "text-[#e2e2e7]" : theme.textAccentLight 
                 )}>{prediction.isSmall ? 'SMALL' : 'BIG'}</span>
               </h3>
               <span className="text-xl sm:text-2xl font-mono text-gray-600">/ {prediction.confidence.toFixed(1)}%</span>
@@ -87,7 +123,7 @@ export function PredictionEngine({ data, prediction, isPredicting, timeLeft }: P
                 <span className="block text-[10px] text-gray-500 uppercase mb-2">Next Time</span>
                 <span className={cn(
                   "text-3xl font-bold font-mono",
-                  timeLeft <= 5 ? "text-red-500 animate-pulse" : "text-blue-400"
+                  timeLeft <= 5 ? "text-red-500 animate-pulse" : theme.textAccentLight
                 )}>
                   00:{timeLeft.toString().padStart(2, '0')}
                 </span>

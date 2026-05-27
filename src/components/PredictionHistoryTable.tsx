@@ -1,13 +1,15 @@
 import { motion } from 'motion/react';
 import { TrackedPrediction, Provider } from '../types';
 import { cn } from '../lib/utils';
+import { ThemeColors } from '../lib/theme';
 
 interface PredictionHistoryTableProps {
   data: TrackedPrediction[];
   provider: Provider;
+  theme: ThemeColors;
 }
 
-export function PredictionHistoryTable({ data, provider }: PredictionHistoryTableProps) {
+export function PredictionHistoryTable({ data, provider, theme }: PredictionHistoryTableProps) {
   const filteredData = data.filter(p => p.provider === provider);
 
   return (
@@ -35,7 +37,7 @@ export function PredictionHistoryTable({ data, provider }: PredictionHistoryTabl
               </td>
               <td className={cn(
                 "px-6 py-3 font-bold text-center",
-                pred.isSmall ? "text-gray-300" : "text-blue-400"
+                pred.isSmall ? "text-gray-300" : theme.textAccentLight
               )}>
                 {pred.isSmall ? 'SMALL' : 'BIG'} <span className="text-gray-500 text-[10px] ml-1">({pred.confidence.toFixed(1)}%)</span>
               </td>
