@@ -1,11 +1,10 @@
 import { Handler } from "@netlify/functions";
-import axios from "axios";
 
 // Fallback Mock Data
 const MOCK_DATA: Record<string, any> = {
-  ck: {"data":{"list":[{"issueNumber":"20260527100050809","number":"2","colour":"red","premium":"99662"},{"issueNumber":"20260527100050808","number":"4","colour":"red","premium":"91874"},{"issueNumber":"20260527100050807","number":"5","colour":"green,violet","premium":"28925"},{"issueNumber":"20260527100050806","number":"0","colour":"red,violet","premium":"66240"},{"issueNumber":"20260527100050805","number":"1","colour":"green","premium":"29711"},{"issueNumber":"20260527100050804","number":"5","colour":"green,violet","premium":"42915"},{"issueNumber":"20260527100050803","number":"4","colour":"red","premium":"43524"},{"issueNumber":"20260527100050802","number":"8","colour":"red","premium":"88608"},{"issueNumber":"20260527100050801","number":"1","colour":"green","premium":"89981"},{"issueNumber":"20260527100050800","number":"5","colour":"green,violet","premium":"29875"}],"pageNo":1,"totalPage":9087,"totalCount":90869},"code":0,"msg":"Succeed","msgCode":0,"serviceNowTime":"2026-05-27 13:14:30"},
-  bigwin: {"data":{"list":[{"issueNumber":"20260527100050817","number":"8","colour":"red","premium":"38468"},{"issueNumber":"20260527100050816","number":"0","colour":"red,violet","premium":"56120"},{"issueNumber":"20260527100050815","number":"5","colour":"green,violet","premium":"58975"},{"issueNumber":"20260527100050814","number":"9","colour":"green","premium":"45699"},{"issueNumber":"20260527100050813","number":"0","colour":"red,violet","premium":"50370"},{"issueNumber":"20260527100050812","number":"7","colour":"green","premium":"79997"},{"issueNumber":"20260527100050811","number":"4","colour":"red","premium":"28944"},{"issueNumber":"20260527100050810","number":"1","colour":"green","premium":"87841"},{"issueNumber":"20260527100050809","number":"3","colour":"green","premium":"21893"},{"issueNumber":"20260527100050808","number":"4","colour":"red","premium":"93994"}],"pageNo":1,"totalPage":9088,"totalCount":90877},"code":0,"msg":"Succeed","msgCode":0,"serviceNowTime":"2026-05-27 13:18:46"},
-  sixlottery: {"data":{"list":[{"issueNumber":"20260527100050821","number":"2","colour":"red","premium":"81732"},{"issueNumber":"20260527100050820","number":"9","colour":"green","premium":"21699"},{"issueNumber":"20260527100050819","number":"7","colour":"green","premium":"70287"},{"issueNumber":"20260527100050818","number":"2","colour":"red","premium":"18482"},{"issueNumber":"20260527100050817","number":"2","colour":"red","premium":"54262"},{"issueNumber":"20260527100050816","number":"6","colour":"red","premium":"72776"},{"issueNumber":"20260527100050815","number":"3","colour":"green","premium":"97513"},{"issueNumber":"20260527100050814","number":"1","colour":"green","premium":"15541"},{"issueNumber":"20260527100050813","number":"6","colour":"red","premium":"74426"},{"issueNumber":"20260527100050812","number":"7","colour":"green","premium":"45937"}],"pageNo":1,"totalPage":3329,"totalCount":33281},"code":0,"msg":"Succeed","msgCode":0,"serviceNowTime":"2026-05-27 13:20:56"}
+  ck: {"data":{"list":[{"issueNumber":"20260527100050809","number":"2","colour":"red","premium":"99662"},{"issueNumber":"20260527100050808","number":"4","colour":"red","premium":"91874"}],"pageNo":1,"totalPage":9087,"totalCount":90869},"code":0,"msg":"Succeed","msgCode":0,"serviceNowTime":"2026-05-27 13:14:30"},
+  bigwin: {"data":{"list":[{"issueNumber":"20260527100050817","number":"8","colour":"red","premium":"38468"},{"issueNumber":"20260527100050816","number":"0","colour":"red,violet","premium":"56120"}],"pageNo":1,"totalPage":9088,"totalCount":90877},"code":0,"msg":"Succeed","msgCode":0,"serviceNowTime":"2026-05-27 13:18:46"},
+  sixlottery: {"data":{"list":[{"issueNumber":"20260527100050821","number":"2","colour":"red","premium":"81732"},{"issueNumber":"20260527100050820","number":"9","colour":"green","premium":"21699"}],"pageNo":1,"totalPage":3329,"totalCount":33281},"code":0,"msg":"Succeed","msgCode":0,"serviceNowTime":"2026-05-27 13:20:56"}
 };
 
 const ROUTES: Record<string, any> = {
@@ -44,33 +43,47 @@ const ROUTES: Record<string, any> = {
 };
 
 export const handler: Handler = async (event, context) => {
-  const provider = event.queryStringParameters?.provider;
-  if (!provider) {
+  let provider = event.queryStringParameters?.provider;
+  
+  if (!provider && event.path) {
+    const parts = event.path.split('/');
+    provider = parts[parts.length - 1];
+  }
+
+  if (!provider || !ROUTES[provider]) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ error: "Provider is required as a query parameter (e.g. ?provider=ck)" })
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ error: "Invalid provider", requestedProvider: provider, path: event.path })
     };
   }
 
   const config = ROUTES[provider];
 
-  if (!config) {
-    return { statusCode: 400, body: JSON.stringify({ error: "Invalid provider" }) };
-  }
-
   try {
-    const response = await axios.post(config.url, config.body, { headers: config.headers, timeout: 5000 });
-    MOCK_DATA[provider] = response.data;
+    const fetchResponse = await fetch(config.url, {
+      method: 'POST',
+      headers: config.headers,
+      body: JSON.stringify(config.body),
+    });
+    
+    const data = await fetchResponse.json();
+    MOCK_DATA[provider] = data;
     
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(response.data)
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
     };
   } catch (error) {
     console.warn(`Failed to fetch from ${provider}, returning cached/mocked data.`);
     
-    // Auto-advance mock data to simulate real-time updates if the user is testing
     const cached = MOCK_DATA[provider];
     if (cached && cached.data && cached.data.list && cached.data.list.length > 0) {
       const lastIssue = cached.data.list[0];
@@ -78,12 +91,10 @@ export const handler: Handler = async (event, context) => {
         const nextTargetNumStr = String(BigInt(lastIssue.issueNumber) + 1n);
         const nextIssueNumber = nextTargetNumStr.padStart(lastIssue.issueNumber.length, '0');
         
-        // Random outcome
         const randomNum = Math.floor(Math.random() * 10);
         let randomColors = randomNum % 2 === 0 ? "red" : "green";
         if (randomNum === 0 || randomNum === 5) randomColors += ",violet";
         
-        // Unshift new item
         cached.data.list.unshift({
           issueNumber: nextIssueNumber,
           number: randomNum.toString(),
@@ -91,18 +102,19 @@ export const handler: Handler = async (event, context) => {
           premium: (Math.random() * 50000 + 20000).toFixed(0)
         });
         
-        // Keep list size at 10
         if (cached.data.list.length > 10) {
           cached.data.list.pop();
         }
       } catch (e) {
-        // Fallback if bigint parsing fails
       }
     }
     
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify(MOCK_DATA[provider])
     };
   }

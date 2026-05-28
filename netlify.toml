@@ -2,8 +2,17 @@
   command = "npm run build"
   publish = "dist"
 
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
 [[redirects]]
-  from = "/api/lottery/:provider"
-  to = "/.netlify/functions/lottery?provider=:provider"
+  from = "/api/lottery/*"
+  to = "/.netlify/functions/lottery"
   status = 200
   force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -48,7 +48,12 @@ export function Dashboard() {
     setLoading(true);
     try {
       const response = await axios.post<LotteryResponse>(`/api/lottery/${provider}`);
-      const list = response.data.data.list;
+      
+      const list = response.data?.data?.list;
+      if (!list || !Array.isArray(list)) {
+        throw new Error("Invalid format received from API");
+      }
+
       setData(list);
       setLastUpdated(new Date());
 
