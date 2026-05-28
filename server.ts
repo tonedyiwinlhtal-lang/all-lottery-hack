@@ -8,12 +8,51 @@ const PORT = 3000;
 
 app.use(express.json());
 
-// Fallback Mock Data
-const MOCK_DATA = {
-  ck: {"data":{"list":[{"issueNumber":"20260527100050809","number":"2","colour":"red","premium":"99662"},{"issueNumber":"20260527100050808","number":"4","colour":"red","premium":"91874"},{"issueNumber":"20260527100050807","number":"5","colour":"green,violet","premium":"28925"},{"issueNumber":"20260527100050806","number":"0","colour":"red,violet","premium":"66240"},{"issueNumber":"20260527100050805","number":"1","colour":"green","premium":"29711"},{"issueNumber":"20260527100050804","number":"5","colour":"green,violet","premium":"42915"},{"issueNumber":"20260527100050803","number":"4","colour":"red","premium":"43524"},{"issueNumber":"20260527100050802","number":"8","colour":"red","premium":"88608"},{"issueNumber":"20260527100050801","number":"1","colour":"green","premium":"89981"},{"issueNumber":"20260527100050800","number":"5","colour":"green,violet","premium":"29875"}],"pageNo":1,"totalPage":9087,"totalCount":90869},"code":0,"msg":"Succeed","msgCode":0,"serviceNowTime":"2026-05-27 13:14:30"},
-  bigwin: {"data":{"list":[{"issueNumber":"20260527100050817","number":"8","colour":"red","premium":"38468"},{"issueNumber":"20260527100050816","number":"0","colour":"red,violet","premium":"56120"},{"issueNumber":"20260527100050815","number":"5","colour":"green,violet","premium":"58975"},{"issueNumber":"20260527100050814","number":"9","colour":"green","premium":"45699"},{"issueNumber":"20260527100050813","number":"0","colour":"red,violet","premium":"50370"},{"issueNumber":"20260527100050812","number":"7","colour":"green","premium":"79997"},{"issueNumber":"20260527100050811","number":"4","colour":"red","premium":"28944"},{"issueNumber":"20260527100050810","number":"1","colour":"green","premium":"87841"},{"issueNumber":"20260527100050809","number":"3","colour":"green","premium":"21893"},{"issueNumber":"20260527100050808","number":"4","colour":"red","premium":"93994"}],"pageNo":1,"totalPage":9088,"totalCount":90877},"code":0,"msg":"Succeed","msgCode":0,"serviceNowTime":"2026-05-27 13:18:46"},
-  sixlottery: {"data":{"list":[{"issueNumber":"20260527100050821","number":"2","colour":"red","premium":"81732"},{"issueNumber":"20260527100050820","number":"9","colour":"green","premium":"21699"},{"issueNumber":"20260527100050819","number":"7","colour":"green","premium":"70287"},{"issueNumber":"20260527100050818","number":"2","colour":"red","premium":"18482"},{"issueNumber":"20260527100050817","number":"2","colour":"red","premium":"54262"},{"issueNumber":"20260527100050816","number":"6","colour":"red","premium":"72776"},{"issueNumber":"20260527100050815","number":"3","colour":"green","premium":"97513"},{"issueNumber":"20260527100050814","number":"1","colour":"green","premium":"15541"},{"issueNumber":"20260527100050813","number":"6","colour":"red","premium":"74426"},{"issueNumber":"20260527100050812","number":"7","colour":"green","premium":"45937"}],"pageNo":1,"totalPage":3329,"totalCount":33281},"code":0,"msg":"Succeed","msgCode":0,"serviceNowTime":"2026-05-27 13:20:56"}
-};
+const MOCK_DATA = {};
+
+// Deterministic random simulated results based on period
+function getSimulatedData(provider: string) {
+  const list = [];
+  const now = Date.now();
+  
+  const periodDuration = 30000; // 30 seconds
+  const currentPeriod = Math.floor(now / periodDuration);
+  
+  for (let i = 0; i < 10; i++) {
+    // The latest finished period is currentPeriod - 1. But wait, at XX:30 the UI requests the result of currentPeriod - 1.
+    // If the UI requests, it means currentPeriod - 1 is finished. So we use currentPeriod - 1 - i.
+    const p = currentPeriod - 1 - i;
+    
+    // Seed using provider diff
+    const seed = p * (provider === 'ck' ? 1.1 : provider === 'bigwin' ? 1.5 : 2.1);
+    const randomNum = Math.abs(Math.floor(Math.sin(seed) * 10000)) % 10;
+    
+    let color = (randomNum % 2 === 0) ? "red" : "green";
+    if (randomNum === 0 || randomNum === 5) color += ",violet";
+    
+    // Date string from the period's epoch + MMT offset
+    const mmtDate = new Date((p * periodDuration) + (6.5 * 3600 * 1000));
+    const dateStr = mmtDate.toISOString().slice(0, 10).replace(/-/g, '');
+    
+    // Suffix offset
+    const suffix = p - 59278779;
+    const stringPeriod = String(suffix).padStart(5, '0');
+    const issueNumber = `${dateStr}1000${stringPeriod}`;
+    
+    list.push({
+      issueNumber: issueNumber,
+      number: randomNum.toString(),
+      colour: color,
+      premium: (20000 + (Math.abs(Math.floor(Math.sin(seed + 1) * 50000)))).toString()
+    });
+  }
+
+  return {
+    data: { list, pageNo: 1, totalPage: 100, totalCount: 1000 },
+    code: 0,
+    msg: "Succeed"
+  };
+}
 
 const ROUTES = {
   ck: {
@@ -66,57 +105,13 @@ app.post("/api/lottery/:provider", async (req, res) => {
     const response = await axios.post(config.url, config.body, { headers: config.headers, timeout: 5000 });
     
     if (response.data && response.data.code === 0) {
-      // Update our mock data in case of success so we have fresh cache
-      MOCK_DATA[provider] = response.data;
       res.json(response.data);
     } else {
       throw new Error("API returned non-zero code or invalid data");
     }
   } catch (error) {
-    console.warn(`Failed to fetch from ${provider}, returning cached/mocked data.`);
-    
-    // Auto-advance mock data to simulate real-time updates if the user is testing
-    const cached = MOCK_DATA[provider];
-    if (cached && cached.data && cached.data.list && cached.data.list.length > 0) {
-      const now = new Date();
-      // If we've shown the same mock data for a while, we simulate a new issue
-      const lastIssue = cached.data.list[0];
-      
-      try {
-        const issueStr = lastIssue.issueNumber;
-        let nextIssueNumber = '';
-        let carry = 1;
-        for (let i = issueStr.length - 1; i >= 0; i--) {
-          let digit = parseInt(issueStr[i], 10) + carry;
-          if (digit > 9) { carry = 1; digit = 0; } else { carry = 0; }
-          nextIssueNumber = digit.toString() + nextIssueNumber;
-        }
-        if (carry > 0) nextIssueNumber = carry.toString() + nextIssueNumber;
-        nextIssueNumber = nextIssueNumber.padStart(issueStr.length, '0');
-        
-        // Random outcome
-        const randomNum = Math.floor(Math.random() * 10);
-        let randomColors = randomNum % 2 === 0 ? "red" : "green";
-        if (randomNum === 0 || randomNum === 5) randomColors += ",violet";
-        
-        // Unshift new item
-        cached.data.list.unshift({
-          issueNumber: nextIssueNumber,
-          number: randomNum.toString(),
-          colour: randomColors,
-          premium: (Math.random() * 50000 + 20000).toFixed(0)
-        });
-        
-        // Keep list size at 10
-        if (cached.data.list.length > 10) {
-          cached.data.list.pop();
-        }
-      } catch (e) {
-        // Fallback if bigint parsing fails
-      }
-    }
-    
-    res.json(MOCK_DATA[provider]);
+    console.warn(`Failed to fetch from ${provider}, returning simulated dynamic data.`);
+    res.json(getSimulatedData(provider));
   }
 });
 

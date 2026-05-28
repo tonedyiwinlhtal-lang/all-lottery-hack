@@ -142,7 +142,7 @@ export function Dashboard() {
       
       // Trigger prediction sequence
       setIsPredicting(true);
-      setTimeout(() => setIsPredicting(false), 2000); // 2 second mock processing time
+      setTimeout(() => setIsPredicting(false), 500); // 0.5 second mock processing time instead of 2s
     } catch (error) {
       console.error("Failed to fetch data:", error);
     } finally {
@@ -163,8 +163,10 @@ export function Dashboard() {
       // For a 30s game, timer resets at 0 and 30 seconds
       let remaining = 30 - (currentSeconds % 30);
       
-      // If we just hit exactly 30 seconds (remaining is 30, meaning currentSeconds was 0 or 30)
-      if (remaining === 30) {
+      // If we just hit exactly 30 seconds, or 29 seconds (1 second buffer to allow API to update and handle clock drift)
+      // We will only do it effectively once because we debounce or state will catch it, but actually setInterval is 1000ms.
+      // Easiest robust way: fetch on both 30 and 28. If 30 got old data due to API latency, 28 catches it.
+      if (remaining === 30 || remaining === 28) {
         fetchData(activeProvider);
       }
       
