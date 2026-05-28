@@ -7,8 +7,8 @@
   node_bundler = "esbuild"
 
 [[redirects]]
-  from = "/api/lottery/*"
-  to = "/.netlify/functions/lottery"
+  from = "/api/lottery/:provider"
+  to = "/.netlify/functions/lottery?provider=:provider"
   status = 200
   force = true
 
