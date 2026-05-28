@@ -77,6 +77,39 @@ export function Dashboard() {
                return p;
            });
            
+           // Retroactive population for missing past issues to ensure history is full on load
+           for (let i = list.length - 2; i >= 0; i--) {
+               const actual = list[i];
+               const historySlice = list.slice(i + 1);
+               const existing = updated.find(p => String(p.issueNumber) === String(actual.issueNumber) && p.provider === provider);
+               
+               if (!existing && historySlice.length > 0) {
+                   const retroPredictionObj = generatePrediction(historySlice, algorithm);
+                   if (retroPredictionObj) {
+                       const actualNumber = parseInt(actual.number, 10);
+                       if (!isNaN(actualNumber)) {
+                         const isSmallActual = actualNumber < 5;
+                         updated.push({
+                             issueNumber: actual.issueNumber,
+                             provider,
+                             isSmall: retroPredictionObj.isSmall,
+                             predictedNumber: retroPredictionObj.number,
+                             confidence: retroPredictionObj.confidence,
+                             status: isSmallActual === retroPredictionObj.isSmall ? 'WIN' : 'LOSE',
+                             actualNumber: actualNumber
+                         });
+                       }
+                   }
+               }
+           }
+           
+           // Keep sorted by newest first
+           updated.sort((a, b) => {
+             if (a.issueNumber < b.issueNumber) return 1;
+             if (a.issueNumber > b.issueNumber) return -1;
+             return 0;
+           });
+
            // Insert or update pending
            const existingPendingIndex = updated.findIndex(p => String(p.issueNumber) === String(nextIssue) && p.provider === provider);
            const newPredictionObj = generatePrediction(list, algorithm);
@@ -119,18 +152,27 @@ export function Dashboard() {
 
   useEffect(() => {
     fetchData(activeProvider);
-    setTimeLeft(30);
     
-    // Auto-refresh interval (30 seconds)
-    const intervalId = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          fetchData(activeProvider);
-          return 30;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    // Sync to MMT (UTC+6:30) seconds
+    const updateTimer = () => {
+      const now = new Date();
+      // Calculate Myanmar Time (UTC+6:30)
+      const mmTime = new Date(now.getTime() + (6.5 * 60 * 60 * 1000));
+      
+      const currentSeconds = mmTime.getUTCSeconds();
+      // For a 30s game, timer resets at 0 and 30 seconds
+      let remaining = 30 - (currentSeconds % 30);
+      
+      // If we just hit exactly 30 seconds (remaining is 30, meaning currentSeconds was 0 or 30)
+      if (remaining === 30) {
+        fetchData(activeProvider);
+      }
+      
+      setTimeLeft(remaining);
+    };
+
+    updateTimer();
+    const intervalId = setInterval(updateTimer, 1000);
 
     return () => clearInterval(intervalId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -179,7 +221,9 @@ export function Dashboard() {
             <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
             <span className="text-green-500 font-medium">API CONNECTED: 200 OK</span>
           </div>
-          <span className="opacity-40 text-gray-500 hidden md:block">TS: {Math.floor(Date.now() / 1000)}</span>
+          <span className="opacity-40 text-gray-500 hidden md:block">
+            MMT: {new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Yangon', hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date())}
+          </span>
         </div>
       </header>
 

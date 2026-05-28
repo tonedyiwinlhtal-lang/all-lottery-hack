@@ -2,13 +2,31 @@ import { LotteryResult, PredictionAlgorithm } from '../types';
 
 export function getNextIssue(current: string): string {
   if (!current) return "WAITING...";
+  
+  const addOne = (str: string): string => {
+    let result = '';
+    let carry = 1;
+    for (let i = str.length - 1; i >= 0; i--) {
+      let digit = parseInt(str[i], 10) + carry;
+      if (digit > 9) {
+        carry = 1;
+        digit = 0;
+      } else {
+        carry = 0;
+      }
+      result = digit.toString() + result;
+    }
+    if (carry > 0) result = carry.toString() + result;
+    return result.padStart(str.length, '0');
+  };
+
   try {
     if (/^\d+$/.test(current)) {
-      return String(BigInt(current) + 1n).padStart(current.length, '0');
+      return addOne(current);
     }
     const match = current.match(/^(.*?)(\d+)$/);
     if (match) {
-      const nextNum = String(BigInt(match[2]) + 1n).padStart(match[2].length, '0');
+      const nextNum = addOne(match[2]);
       return match[1] + nextNum;
     }
     return "WAITING...";

@@ -120,7 +120,7 @@ export function PredictionEngine({ data, prediction, isPredicting, timeLeft, alg
               </div>
               
               <div className="text-right">
-                <span className="block text-[10px] text-gray-500 uppercase mb-2">Next Time</span>
+                <span className="block text-[10px] text-gray-500 uppercase mb-2">Next Time (MMT)</span>
                 <span className={cn(
                   "text-3xl font-bold font-mono",
                   timeLeft <= 5 ? "text-red-500 animate-pulse" : theme.textAccentLight

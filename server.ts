@@ -64,9 +64,14 @@ app.post("/api/lottery/:provider", async (req, res) => {
 
   try {
     const response = await axios.post(config.url, config.body, { headers: config.headers, timeout: 5000 });
-    // Update our mock data in case of success so we have fresh cache
-    MOCK_DATA[provider] = response.data;
-    res.json(response.data);
+    
+    if (response.data && response.data.code === 0) {
+      // Update our mock data in case of success so we have fresh cache
+      MOCK_DATA[provider] = response.data;
+      res.json(response.data);
+    } else {
+      throw new Error("API returned non-zero code or invalid data");
+    }
   } catch (error) {
     console.warn(`Failed to fetch from ${provider}, returning cached/mocked data.`);
     
@@ -78,8 +83,16 @@ app.post("/api/lottery/:provider", async (req, res) => {
       const lastIssue = cached.data.list[0];
       
       try {
-        const nextTargetNumStr = String(BigInt(lastIssue.issueNumber) + 1n);
-        const nextIssueNumber = nextTargetNumStr.padStart(lastIssue.issueNumber.length, '0');
+        const issueStr = lastIssue.issueNumber;
+        let nextIssueNumber = '';
+        let carry = 1;
+        for (let i = issueStr.length - 1; i >= 0; i--) {
+          let digit = parseInt(issueStr[i], 10) + carry;
+          if (digit > 9) { carry = 1; digit = 0; } else { carry = 0; }
+          nextIssueNumber = digit.toString() + nextIssueNumber;
+        }
+        if (carry > 0) nextIssueNumber = carry.toString() + nextIssueNumber;
+        nextIssueNumber = nextIssueNumber.padStart(issueStr.length, '0');
         
         // Random outcome
         const randomNum = Math.floor(Math.random() * 10);
