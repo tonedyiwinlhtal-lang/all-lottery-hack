@@ -29,6 +29,7 @@ export function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [predictionHistory, setPredictionHistory] = useState<TrackedPrediction[]>([]);
   const [timeLeft, setTimeLeft] = useState(30);
+  const [isAutoRefresh, setIsAutoRefresh] = useState(true);
   const [algorithm, setAlgorithm] = useState<PredictionAlgorithm>("Frequency");
   
   const [adminConfig, setAdminConfig] = useState<{ adminMessage?: string, overrideNumber?: number } | null>(null);
@@ -181,31 +182,7 @@ export function Dashboard() {
                return p;
            });
            
-           // Retroactive population for missing past issues to ensure history is full on load
-           for (let i = list.length - 2; i >= 0; i--) {
-               const actual = list[i];
-               const historySlice = list.slice(i + 1);
-               const existing = updated.find(p => String(p.issueNumber) === String(actual.issueNumber) && p.provider === provider);
-               
-               if (!existing && historySlice.length > 0) {
-                   const retroPredictionObj = generatePrediction(historySlice, algorithmRef.current);
-                   if (retroPredictionObj) {
-                       const actualNumber = parseInt(actual.number, 10);
-                       if (!isNaN(actualNumber)) {
-                         const isSmallActual = actualNumber < 5;
-                         updated.push({
-                             issueNumber: actual.issueNumber,
-                             provider,
-                             isSmall: retroPredictionObj.isSmall,
-                             predictedNumber: retroPredictionObj.number,
-                             confidence: retroPredictionObj.confidence,
-                             status: isSmallActual === retroPredictionObj.isSmall ? 'WIN' : 'LOSE',
-                             actualNumber: actualNumber
-                         });
-                       }
-                   }
-               }
-           }
+           // Retroactive population disabled: we only track predictions made real-time
            
            // Keep sorted by newest first
            updated.sort((a, b) => {
@@ -254,6 +231,11 @@ export function Dashboard() {
     }
   };
 
+  const isAutoRefreshRef = useRef(isAutoRefresh);
+  useEffect(() => {
+    isAutoRefreshRef.current = isAutoRefresh;
+  }, [isAutoRefresh]);
+
   const fetchDataRef = useRef(fetchData);
   useEffect(() => {
     fetchDataRef.current = fetchData;
@@ -273,8 +255,11 @@ export function Dashboard() {
       // For a 30s game, timer resets at 0 and 30 seconds
       let remaining = 30 - (currentSeconds % 30);
       
-      // If we just hit exactly 30 seconds, or 28 seconds (buffer for API latency)
-      if (remaining === 30 || remaining === 28) {
+      // Fetch data at key intervals to ensure we get the latest results even if API is slow
+      // 30: Ideal start of new game
+      // 28: Initial buffer fetch
+      // 25, 22: Fallback retry fetches if the API was delayed in publishing the result
+      if (isAutoRefreshRef.current && (remaining === 30 || remaining === 28 || remaining === 25 || remaining === 22)) {
         fetchDataRef.current(activeProviderRef.current);
       }
       
@@ -368,9 +353,17 @@ export function Dashboard() {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Active Data Streams</h2>
                 <div className="flex items-center gap-2">
-                  <span className="text-[9px] text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded border border-green-500/20 font-bold uppercase tracking-wider hidden sm:block">
-                    Auto-Refresh in {timeLeft}s
-                  </span>
+                  <button
+                    onClick={() => setIsAutoRefresh(!isAutoRefresh)}
+                    className={cn(
+                      "text-[9px] px-1.5 py-0.5 rounded border font-bold uppercase tracking-wider hidden sm:block transition-colors",
+                      isAutoRefresh 
+                        ? "text-green-500 bg-green-500/10 border-green-500/20" 
+                        : "text-gray-500 bg-gray-500/10 border-gray-500/20"
+                    )}
+                  >
+                    {isAutoRefresh ? `Auto-Refresh in ${timeLeft}s` : 'Auto-Refresh OFF'}
+                  </button>
                   <button 
                     onClick={() => { fetchData(activeProvider); setTimeLeft(30); }}
                     disabled={loading}

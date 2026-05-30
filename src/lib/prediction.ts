@@ -159,26 +159,33 @@ export function generatePrediction(data: LotteryResult[], algorithm: PredictionA
       baseConfidence = 50;
     }
   } else {
-    // Frequency Strategy
+    // Frequency Strategy + Chaos
     const numbers = recentData.map(item => parseInt(item.number, 10)).filter(n => !isNaN(n));
     if (numbers.length > 0) {
-      // Hot/Cold Analysis: mix of most frequent in last 20, but not recently hitting back-to-back
       const freq: Record<number, number> = {};
       for (let i = 0; i <= 9; i++) freq[i] = 0;
-      
       numbers.forEach(num => freq[num]++);
       
       const sortedFreq = Object.entries(freq).sort((a, b) => b[1] - a[1]); // Descending
-      const topNumbers = sortedFreq.slice(0, 3).map(e => parseInt(e[0], 10));
+      const topNumbers = sortedFreq.slice(0, 4).map(e => parseInt(e[0], 10));
       
-      // Avoid predicting the exact number that just hit (unless it's extremely hot)
+      // Randomly select one of the top 3 with varying weights
+      const rand = Math.random();
       let candidate = topNumbers[0];
-      if (candidate === numbers[0] && numbers.length > 1 && numbers[1] !== numbers[0]) {
-         candidate = topNumbers[1];
+      
+      if (rand > 0.5 && rand <= 0.8) candidate = topNumbers[1];
+      else if (rand > 0.8) candidate = topNumbers[2];
+
+      // Avoid predicting the exact number that just hit to feel more dynamic
+      if (candidate === numbers[0]) {
+         candidate = topNumbers[1] !== numbers[0] ? topNumbers[1] : topNumbers[2];
+      }
+      if (candidate === undefined || candidate === numbers[0]) {
+         candidate = Math.floor(Math.random() * 10);
       }
       
       predictedNumber = candidate;
-      baseConfidence = 75 + (sortedFreq[0][1] / numbers.length) * 20; // Confidence based on how dominant frequency is
+      baseConfidence = 70 + (Math.random() * 20);
     } else {
        predictedNumber = Math.floor(Math.random() * 10);
        baseConfidence = 50;
