@@ -1,0 +1,39 @@
+{
+  "entities": {
+    "Config": {
+      "title": "Global Configuration",
+      "description": "Global admin configuration",
+      "type": "object",
+      "properties": {
+        "adminMessage": {
+          "type": "string"
+        },
+        "overrideNumber": {
+          "type": "number",
+          "description": "Forced prediction number by admin"
+        },
+        "authSecret": {
+          "type": "string"
+        }
+      }
+    },
+    "AccessKey": {
+      "type": "object",
+      "properties": {
+        "key": { "type": "string" },
+        "expiresAt": { "type": "number" },
+        "createdAt": { "type": "number" },
+        "secret": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/admin/{configId}": {
+      "schema": "Config",
+      "description": "Admin configuration storage"
+    },
+    "/keys/{keyId}": {
+      "schema": "AccessKey"
+    }
+  }
+}

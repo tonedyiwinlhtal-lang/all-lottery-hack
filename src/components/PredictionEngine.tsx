@@ -10,7 +10,7 @@ const ALGORITHMS: PredictionAlgorithm[] = ['Frequency', 'Moving Average', 'Patte
 
 interface PredictionEngineProps {
   data: LotteryResult[];
-  prediction: { number: number; confidence: number; colours: string[], isSmall: boolean } | null;
+  prediction: { number: number; confidence: number; colours: string[], isSmall: boolean, isOverridden?: boolean } | null;
   isPredicting: boolean;
   timeLeft: number;
   algorithm: PredictionAlgorithm;
@@ -89,13 +89,18 @@ export function PredictionEngine({ data, prediction, isPredicting, timeLeft, alg
             <span className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Algorithm Confidence</span>
             
             <div className="flex items-baseline gap-4 mb-8">
-              <h3 className="text-4xl sm:text-6xl font-light tracking-tighter text-white">
+              <h3 className="text-4xl sm:text-6xl font-light tracking-tighter text-white flex items-center gap-4">
                 PREDICTION: <span className={cn(
                   "font-bold",
                   prediction.isSmall ? "text-[#e2e2e7]" : theme.textAccentLight 
                 )}>{prediction.isSmall ? 'SMALL' : 'BIG'}</span>
+                {prediction.isOverridden && (
+                  <span className="text-[10px] sm:text-xs px-2 py-1 rounded bg-red-500/20 text-red-500 border border-red-500/20 font-bold uppercase tracking-widest translate-y-[-0.25rem]">
+                    OVERRIDE 
+                  </span>
+                )}
               </h3>
-              <span className="text-xl sm:text-2xl font-mono text-gray-600">/ {prediction.confidence.toFixed(1)}%</span>
+              <span className="text-xl sm:text-2xl font-mono text-gray-600 hidden sm:inline">/ {prediction.confidence.toFixed(1)}%</span>
             </div>
 
             <div className="grid grid-cols-3 gap-4 sm:gap-8 border-t border-[#2d2d33] pt-8">

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { Provider, LotteryResponse, LotteryResult, TrackedPrediction, PredictionAlgorithm } from "../types";
 import { HistoryTable } from "./HistoryTable";
 import { AnalyticsChart } from "./AnalyticsChart";
@@ -7,9 +8,11 @@ import { PredictionEngine } from "./PredictionEngine";
 import { PredictionHistoryTable } from "./PredictionHistoryTable";
 import { WinRatioChart } from "./WinRatioChart";
 import { generatePrediction, getNextIssue } from "../lib/prediction";
-import { BarChart3, RefreshCw, Menu, ArrowLeft } from "lucide-react";
+import { BarChart3, RefreshCw, Menu, ArrowLeft, ShieldAlert, LogOut } from "lucide-react";
 import { cn } from "../lib/utils";
 import { getTheme } from "../lib/theme";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db, handleFirestoreError } from "../lib/firebase";
 
 const PROVIDERS: { id: Provider; name: string }[] = [
   { id: "ck", name: "CK 30S" },
@@ -27,6 +30,73 @@ export function Dashboard() {
   const [predictionHistory, setPredictionHistory] = useState<TrackedPrediction[]>([]);
   const [timeLeft, setTimeLeft] = useState(30);
   const [algorithm, setAlgorithm] = useState<PredictionAlgorithm>("Frequency");
+  
+  const [adminConfig, setAdminConfig] = useState<{ adminMessage?: string, overrideNumber?: number } | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const isAdmin = localStorage.getItem("isAdmin") === "true";
+    const userKey = localStorage.getItem("userKey");
+    
+    if (!isAdmin && !userKey) {
+      navigate("/login");
+      return;
+    }
+
+    if (!isAdmin && userKey) {
+      let currentExpiresAt: number | null = null;
+      
+      const unsubUser = onSnapshot(doc(db, "keys", userKey), (snapshot) => {
+        if (!snapshot.exists()) {
+          // Key deleted
+          localStorage.removeItem("userKey");
+          navigate("/login");
+        } else {
+          const data = snapshot.data();
+          currentExpiresAt = data.expiresAt;
+          if (data.expiresAt < Date.now()) {
+            // Key expired
+            localStorage.removeItem("userKey");
+            navigate("/login");
+          }
+        }
+      }, () => {
+        // Silent
+      });
+
+      // Periodically check if the key has expired without waiting for a database change
+      const intervalId = setInterval(() => {
+        if (currentExpiresAt && currentExpiresAt < Date.now()) {
+          localStorage.removeItem("userKey");
+          navigate("/login");
+        }
+      }, 5000);
+
+      return () => {
+        unsubUser();
+        clearInterval(intervalId);
+      };
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, "admin", "config"), (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        setAdminConfig({
+          adminMessage: data.adminMessage,
+          overrideNumber: data.overrideNumber
+        });
+      } else {
+        setAdminConfig(null);
+      }
+    }, (error) => {
+      // Don't crash UI, just log
+      console.warn("Could not load global config");
+    });
+
+    return () => unsub();
+  }, []);
 
   const theme = getTheme(activeProvider);
 
@@ -35,14 +105,23 @@ export function Dashboard() {
     p => p.provider === activeProvider && p.status === 'PENDING' && String(p.issueNumber) === String(nextTargetIssue)
   );
   
-  const derivedPrediction = pendingForActive ? {
-    number: pendingForActive.predictedNumber,
-    confidence: pendingForActive.confidence,
-    colours: pendingForActive.predictedNumber % 2 === 0 ? 
-      (pendingForActive.predictedNumber === 0 ? ['red', 'violet'] : ['red']) : 
-      (pendingForActive.predictedNumber === 5 ? ['green', 'violet'] : ['green']),
-    isSmall: pendingForActive.isSmall
-  } : null;
+  const getOverriddenPrediction = (original: TrackedPrediction | undefined) => {
+    if (!original) return null;
+    const isOverrideActive = adminConfig?.overrideNumber !== undefined && adminConfig.overrideNumber !== null;
+    const finalNumber = isOverrideActive ? adminConfig.overrideNumber! : original.predictedNumber;
+    
+    return {
+      number: finalNumber,
+      confidence: isOverrideActive ? 99 : original.confidence, // Admin override forces high confidence
+      colours: finalNumber % 2 === 0 ? 
+        (finalNumber === 0 ? ['red', 'violet'] : ['red']) : 
+        (finalNumber === 5 ? ['green', 'violet'] : ['green']),
+      isSmall: finalNumber < 5,
+      isOverridden: isOverrideActive
+    };
+  };
+
+  const derivedPrediction = getOverriddenPrediction(pendingForActive);
 
   const fetchData = async (provider: Provider) => {
     setLoading(true);
@@ -214,7 +293,7 @@ export function Dashboard() {
           <nav className="hidden lg:flex gap-1 ml-4 xl:ml-8">
             <button className={cn("px-4 py-2 bg-[#23232a] text-sm rounded-md border border-[#3b3b45]", theme.textAccentLight)}>Terminal</button>
             <button className="px-4 py-2 hover:bg-[#1c1c24] text-sm rounded-md transition-colors text-gray-400 hover:text-gray-200">Architecture</button>
-            <button className="px-4 py-2 hover:bg-[#1c1c24] text-sm rounded-md transition-colors text-gray-400 hover:text-gray-200">Security</button>
+            <a href="/login" className="px-4 py-2 hover:bg-[#1c1c24] text-sm rounded-md transition-colors text-gray-400 hover:text-gray-200">Security</a>
           </nav>
         </div>
         
@@ -226,6 +305,17 @@ export function Dashboard() {
           <span className="opacity-40 text-gray-500 hidden md:block">
             MMT: {new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Yangon', hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date())}
           </span>
+          <button 
+            onClick={() => {
+              localStorage.removeItem("userKey");
+              localStorage.removeItem("isAdmin");
+              navigate("/login");
+            }}
+            className="p-2 hover:bg-red-500/10 hover:text-red-500 text-gray-500 rounded-lg transition-colors border border-transparent hover:border-red-500/20 flex items-center justify-center cursor-pointer ml-1"
+            title="Disconnect & Logout"
+          >
+            <LogOut className="w-4 h-4 ml-0.5" />
+          </button>
         </div>
       </header>
 
@@ -305,6 +395,13 @@ export function Dashboard() {
 
         {/* Main Viewport */}
         <section className="flex-1 flex flex-col bg-[#0a0a0c] overflow-y-auto">
+          {adminConfig?.adminMessage && adminConfig.adminMessage.trim() !== "" && (
+            <div className="bg-red-500/10 border-b border-red-500/20 px-8 py-3 flex items-center gap-3 shrink-0">
+              <ShieldAlert className="w-5 h-5 text-red-500 shrink-0" />
+              <p className="text-sm font-medium text-red-500">{adminConfig.adminMessage}</p>
+            </div>
+          )}
+
           {/* Top Dashboard: Active Prediction */}
           <div className="p-8 grid gap-6 xl:grid-cols-12 shrink-0">
             <div className="xl:col-span-8 group">

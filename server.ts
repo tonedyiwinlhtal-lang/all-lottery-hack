@@ -58,10 +58,6 @@ const ROUTES = {
   ck: {
     url: "https://ckygjf6r.com/api/webapi/GetNoaverageEmerdList",
     headers: {
-      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOiIxNzc5ODY0MjU4IiwibmJmIjoiMTc3OTg2NDI1OCIsImV4cCI6IjE3Nzk4NjYwNTgiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL2V4cGlyYXRpb24iOiI1LzI3LzIwMjYgMTo0NDoxOCBQTSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFjY2Vzc19Ub2tlbiIsIlVzZXJJZCI6IjQ4NzIwMyIsIlVzZXJOYW1lIjoiOTU5Nzc3NTQ1NTg5IiwiVXNlclBob3RvIjoiMjAiLCJOaWNrTmFtZSI6Ik1HVEhBTlQgIiwiQW1vdW50IjoiMi42MSIsIkludGVncmFsIjoiMCIsIkxvZ2luTWFyayI6Ikg1IiwiTG9naW5UaW1lIjoiNS8yNy8yMDI2IDE6MTQ6MTggUE0iLCJMb2dpbklQQWRkcmVzcyI6IjJhMDk6YmFjMTo2NTAwOjg6OjNjNDo0YyIsIkRiTnVtYmVyIjoiMCIsIklzdmFsaWRhdG9yIjoiMCIsIktleUNvZGUiOiI2MDgiLCJUb2tlblR5cGUiOiJBY2Nlc3NfVG9rZW4iLCJQaG9uZVR5cGUiOiIxIiwiVXNlclR5cGUiOiIwIiwiVXNlck5hbWUyIjoiIiwiaXNzIjoiand0SXNzdWVyIiwiYXVkIjoibG90dGVyeVRpY2tldCJ9.yf5R-frcN9QakoKxEvPrEmh3iVoOvq5FuYegcwJfI3c",
-      "Ar-Origin": "https://cklottery.top",
-      "User-Agent": "Mozilla/5.0 (Android 10; Mobile; rv:151.0) Gecko/151.0 Firefox/151.0",
-      "Referer": "https://cklottery.top/#/home/AllLotteryGames/WinGo?id=1",
       "Content-Type": "application/json;charset=UTF-8",
       "Accept": "application/json, text/plain, */*"
     },
@@ -70,8 +66,6 @@ const ROUTES = {
   bigwin: {
     url: "https://api.bigwinqaz.com/api/webapi/GetNoaverageEmerdList",
     headers: {
-      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOiIxNzc5ODY0MzYyIiwibmJmIjoiMTc3OTg2NDMzNjIiLCJleHAiOiIxNzc5ODY2MTYyIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9leHBpcmF0aW9uIjoiNS8yNy8yMDI2IDE6NDY6MDIgUE0iLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBY2Nlc3NfVG9rZW4iLCJVc2VySWQiOiIxMDI2NDAiLCJVc2VyTmFtZSI6Ijk1OTk1OTg2ODg0MCIsIlVzZXJQaG90byI6IjEiLCJOaWNrTmFtZSI6Ik1lbWJlck5ORzBGUFFHIiwiQW1vdW50IjoiMTg0LjkxIiwiSW50ZWdyYWwiOiIwIiwiTG9naW5NYXJrIjoiSDUiLCJMb2dpblRpbWUiOiI1LzI3LzIwMjYgMToxNjowMiBQTSIsIkxvZ2luSVBBZGRyZXNzIjoiMmEwOTpiYWMxOjY1NjA6ODo6M2M0OjRjIiwiRGJOdW1iZXIiOiIwIiwiSXN2YWxpZGF0b3IiOiIwIiwiS2V5Q29kZSI6IjM0OCIsIlRva2VuVHlwZSI6IkFjY2Vzc19Ub2tlbiIsIlBob25lVHlwZSI6IjEiLCJVc2VyVHlwZSI6IjAiLCJVc2VyTmFtZTIiOiIiLCJpc3MiOiJqd3RJc3N1ZXIiLCJhdWQiOiJsb3R0ZXJ5VGlja2V0In0.y0iYWmYLd77prcCu744yXnQpl6xvAmFf7qONmsfoRv0",
-      "Ar-Origin": "https://bigwingame.win",
       "Content-Type": "application/json;charset=UTF-8",
       "Accept": "application/json, text/plain, */*"
     },
@@ -80,8 +74,6 @@ const ROUTES = {
   sixlottery: {
     url: "https://6lotteryapi.com/api/webapi/GetNoaverageEmerdList",
     headers: {
-      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOiIxNzc5ODY0NjAyIiwibmJmIjoiMTc3OTg2NDYwMiIsImV4cCI6IjE3Nzk4NjY0MDIiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL2V4cGlyYXRpb24iOiI1LzI3LzIwMjYgMTo1MDowMiBQTSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFjY2Vzc19Ub2tlbiIsIlVzZXJJZCI6IjEwNDU1NTIiLCJVc2VyTmFtZSI6Ijk1OTY3OTg3NzM3OSIsIlVzZXJQaG90byI6IjEiLCJOaWNrTmFtZSI6Ik1lbWJlck5OR0w3TUdNIiwiQW1vdW50IjoiOTIuOTAiLCJJbnRlZ3JhbCI6IjAiLCJMb2dpbk1hcmsiOiJINSIsIkxvZ2luVGltZSI6IjUvMjcvMjAyNiAxOjIwOjAyIFBNIiwiTG9naW5JUEFkZHJlc3MiOiIyYTA5OmJhYzU6NTVmODoyNWNkOjozYzQ6NGMiLCJEYk51bWJlciI6IjAiLCJJc3ZhbGlkYXRvciI6IjAiLCJLZXlDb2RlIjoiMjQ1IiwiVG9rZW5UeXBlIjoiQWNjZXNzX1Rva2VuIiwiUGhvbmVUeXBlIjoiMSIsIlVzZXJUeXBlIjoiMCIsIlVzZXJOYW1lMiI6IiIsImlzcyI6Imp3dElzc3VlciIsImF1ZCI6ImxvdHRlcnlUaWNrZXQifQ.IVAY1eGdTNRQz8l3mq25XXyvcxHMcuMnujTcV_L5YVs",
-      "Ar-Origin": "https://www.6win571.com",
       "Content-Type": "application/json;charset=UTF-8",
       "Accept": "application/json, text/plain, */*"
     },
