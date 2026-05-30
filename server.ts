@@ -67,17 +67,21 @@ const ROUTES = {
     url: "https://api.bigwinqaz.com/api/webapi/GetNoaverageEmerdList",
     headers: {
       "Content-Type": "application/json;charset=UTF-8",
-      "Accept": "application/json, text/plain, */*"
+      "Accept": "application/json, text/plain, */*",
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOiIxNzgwMTQ3MzcyIiwibmJmIjoiMTc4MDE0NzM3MiIsImV4cCI6IjE3ODAxNDkxNzIiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL2V4cGlyYXRpb24iOiI1LzMwLzIwMjYgODoyMjo1MiBQTSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFjY2Vzc19Ub2tlbiIsIlVzZXJJZCI6IjUzMTc0OCIsIlVzZXJOYW1lIjoiOTU5OTcwNTQwNzc1IiwiVXNlclBob3RvIjoiNiIsIk5pY2tOYW1lIjoiTUcgVEhBTlQgIiwiQW1vdW50IjoiMTAyLjkwIiwiSW50ZWdyYWwiOiIwIiwiTG9naW5NYXJrIjoiSDUiLCJMb2dpblRpbWUiOiI1LzMwLzIwMjYgNzo1Mjo1MiBQTSIsIkxvZ2luSVBBZGRyZXNzIjoiMmEwOTpiYWMxOjY1NjA6ODo6Mjc3OjFhIiwiRGJOdW1iZXIiOiIwIiwiSXN2YWxpZGF0b3IiOiIwIiwiS2V5Q29kZSI6IjY4NCIsIlRva2VuVHlwZSI6IkFjY2Vzc19Ub2tlbiIsIlBob25lVHlwZSI6IjEiLCJVc2VyVHlwZSI6IjAiLCJVc2VyTmFtZTIiOiIiLCJpc3MiOiJqd3RJc3N1ZXIiLCJhdWQiOiJsb3R0ZXJ5VGlja2V0In0.wjW8WKKGK9Q2UGxc2BIjI_wfm6vvUUD87ZugfiOW0n0",
+      "Ar-Origin": "https://www.777bigwingame.org"
     },
-    body: {"pageSize":10,"pageNo":1,"typeId":30,"language":7,"random":"aedffbeb987d47f79d42245f8a81279b","signature":"6065D3B25827EEC98D2AF6258740A1FD","timestamp":1779864524}
+    body: {"pageSize":10,"pageNo":1,"typeId":30,"language":7,"random":"7ecc63677eed45f4bc53db2af303a991","signature":"5DFBFD7430EE050C254DB15C16F001FA","timestamp":1780147387}
   },
   sixlottery: {
     url: "https://6lotteryapi.com/api/webapi/GetNoaverageEmerdList",
     headers: {
       "Content-Type": "application/json;charset=UTF-8",
-      "Accept": "application/json, text/plain, */*"
+      "Accept": "application/json, text/plain, */*",
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOiIxNzgwMTQ3NTg1IiwibmJmIjoiMTc4MDE0NzU4NSIsImV4cCI6IjE3ODAxNDkxNzIiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL2V4cGlyYXRpb24iOiI1LzMwLzIwMjYgODoyNjoyNSBQTSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFjY2Vzc19Ub2tlbiIsIlVzZXJJZCI6IjEwNDU1NTIiLCJVc2VyTmFtZSI6Ijk1OTY3OTg3NzM3OSIsIlVzZXJQaG90byI6IjEiLCJOaWNrTmFtZSI6Ik1lbWJlck5OR0w3TUdNIiwiQW1vdW50IjoiOTIuOTAiLCJJbnRlZ3JhbCI6IjAiLCJMb2dpbk1hcmsiOiJINSIsIkxvZ2luVGltZSI6IjUvMzAvMjAyNiA3OjU2OjI1IFBNIiwiTG9naW5JUEFkZHJlc3MiOiIyYTA5OmJhYzU6NTVmZDoxOGJlOjoyNzc6MWEiLCJEYk51bWJlciI6IjAiLCJJc3ZhbGlkYXRvciI6IjAiLCJLZXlDb2RlIjoiMjQ3IiwiVG9rZW5UeXBlIjoiQWNjZXNzX1Rva2VuIiwiUGhvbmVUeXBlIjoiMSIsIlVzZXJUeXBlIjoiMCIsIlVzZXJOYW1lMiI6IiIsImlzcyI6Imp3dElzc3VlciIsImF1ZCI6ImxvdHRlcnlUaWNrZXQifQ.l2XQb-yrZkfNIkcQv8pX9UuP_yL1L5Eg9rLB41SLS1I",
+      "Ar-Origin": "https://www.6win571.com"
     },
-    body: {"pageSize":10,"pageNo":1,"typeId":30,"language":7,"random":"0d85cdc8758d4e418c41a1804f58931e","signature":"3549673884863392363A3C7AB20C3376","timestamp":1779864654}
+    body: {"pageSize":10,"pageNo":1,"typeId":30,"language":7,"random":"9a8d1ba5669b467487e45cf68e338f0d","signature":"CB72506202AD6EEAA05875C2E97D4ED6","timestamp":1780147740}
   }
 };
 
@@ -94,15 +98,20 @@ app.post("/api/lottery/:provider", async (req, res) => {
   }
 
   try {
-    const response = await axios.post(config.url, config.body, { headers: config.headers, timeout: 5000 });
+    const requestBody = { ...config.body };
+    const response = await axios.post(config.url, requestBody, { headers: config.headers, timeout: 5000 });
     
     if (response.data && response.data.code === 0) {
+      if (provider === 'ck' && response.data.data?.data?.gameslist) {
+        response.data.data.list = response.data.data.data.gameslist;
+      } else if (provider === 'ck' && response.data.data?.gameslist) {
+        response.data.data.list = response.data.data.gameslist;
+      }
       res.json(response.data);
     } else {
       throw new Error("API returned non-zero code or invalid data");
     }
   } catch (error) {
-    console.warn(`Failed to fetch from ${provider}, returning simulated dynamic data.`);
     res.json(getSimulatedData(provider));
   }
 });

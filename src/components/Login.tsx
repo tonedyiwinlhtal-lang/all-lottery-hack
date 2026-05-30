@@ -60,15 +60,16 @@ export function Login() {
           <div className="w-12 h-12 bg-red-500/10 text-red-500 flex items-center justify-center rounded-xl mb-4 border border-red-500/20">
             <Lock className="w-6 h-6" />
           </div>
-          <h2 className="text-xl font-bold tracking-tight">System Access</h2>
-          <p className="text-gray-500 text-sm mt-1">Provide your access key</p>
+          <h2 className="text-xl font-bold tracking-tight">System Login</h2>
+          <p className="text-gray-500 text-sm mt-1">Enter your password to continue</p>
         </div>
 
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
           <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Password</label>
             <input
               type="password"
-              placeholder="Enter Access Key"
+              placeholder="Enter Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
@@ -89,7 +90,7 @@ export function Login() {
             disabled={loading}
             className="w-full bg-red-600 hover:bg-red-500 disabled:bg-red-600/50 text-white font-semibold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(220,38,38,0.3)] mt-2"
           >
-            {loading ? "Authenticating..." : "Authenticate"}
+            {loading ? "Logging in..." : "Login"}
             {!loading && <ArrowRight className="w-4 h-4" />}
           </button>
         </form>

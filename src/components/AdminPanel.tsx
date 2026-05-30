@@ -258,15 +258,15 @@ export function AdminPanel() {
         {/* Access Key Management Section */}
         <section>
           <div className="mb-6 pt-6 border-t border-[#2d2d33]">
-            <h2 className="text-2xl font-bold text-white tracking-tight mb-2">Key Generator</h2>
-            <p className="text-gray-500">Create access keys for users and set active expiration windows. Revoking keys will boot active users automatically.</p>
+            <h2 className="text-2xl font-bold text-white tracking-tight mb-2">Password / Key Generator</h2>
+            <p className="text-gray-500">Create access passwords for users and set active expiration windows. Revoking passwords will boot active users automatically.</p>
           </div>
 
           <div className="bg-[#111116] border border-[#2d2d33] rounded-2xl overflow-hidden flex flex-col">
             <div className="p-6 border-b border-[#2d2d33] bg-[#16161d]">
               <form onSubmit={handleCreateKey} className="flex gap-4 items-end flex-wrap">
                 <div className="flex-1 min-w-[200px]">
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Custom Text Key</label>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Custom Text Password</label>
                   <input
                     type="text"
                     required

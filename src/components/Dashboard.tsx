@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Provider, LotteryResponse, LotteryResult, TrackedPrediction, PredictionAlgorithm } from "../types";
@@ -33,6 +33,13 @@ export function Dashboard() {
   
   const [adminConfig, setAdminConfig] = useState<{ adminMessage?: string, overrideNumber?: number } | null>(null);
   const navigate = useNavigate();
+
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const adminConfigRef = useRef(adminConfig);
+  
+  useEffect(() => {
+    adminConfigRef.current = adminConfig;
+  }, [adminConfig]);
 
   useEffect(() => {
     const isAdmin = localStorage.getItem("isAdmin") === "true";
@@ -72,14 +79,18 @@ export function Dashboard() {
         }
       }, 5000);
 
+      setIsAuthChecking(false);
       return () => {
         unsubUser();
         clearInterval(intervalId);
       };
+    } else {
+      setIsAuthChecking(false);
     }
   }, [navigate]);
 
   useEffect(() => {
+    if (isAuthChecking) return;
     const unsub = onSnapshot(doc(db, "admin", "config"), (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.data();
@@ -123,6 +134,12 @@ export function Dashboard() {
 
   const derivedPrediction = getOverriddenPrediction(pendingForActive);
 
+  const activeProviderRef = useRef(activeProvider);
+  useEffect(() => { activeProviderRef.current = activeProvider; }, [activeProvider]);
+  
+  const algorithmRef = useRef(algorithm);
+  useEffect(() => { algorithmRef.current = algorithm; }, [algorithm]);
+
   const fetchData = async (provider: Provider) => {
     setLoading(true);
     try {
@@ -146,9 +163,17 @@ export function Dashboard() {
                    if (actual) {
                        const resultNum = parseInt(actual.number, 10);
                        const isSmallActual = resultNum < 5;
+                       
+                       const activeOverride = adminConfigRef.current?.overrideNumber;
+                       const wasOverridden = activeOverride !== undefined && activeOverride !== null;
+                       const evalNum = wasOverridden ? activeOverride : p.predictedNumber;
+                       const evalIsSmall = evalNum < 5;
+                       
                        return {
                            ...p,
-                           status: isSmallActual === p.isSmall ? 'WIN' : 'LOSE',
+                           predictedNumber: evalNum,
+                           isSmall: evalIsSmall,
+                           status: isSmallActual === evalIsSmall ? 'WIN' : 'LOSE',
                            actualNumber: resultNum
                        };
                    }
@@ -163,7 +188,7 @@ export function Dashboard() {
                const existing = updated.find(p => String(p.issueNumber) === String(actual.issueNumber) && p.provider === provider);
                
                if (!existing && historySlice.length > 0) {
-                   const retroPredictionObj = generatePrediction(historySlice, algorithm);
+                   const retroPredictionObj = generatePrediction(historySlice, algorithmRef.current);
                    if (retroPredictionObj) {
                        const actualNumber = parseInt(actual.number, 10);
                        if (!isNaN(actualNumber)) {
@@ -191,7 +216,7 @@ export function Dashboard() {
 
            // Insert or update pending
            const existingPendingIndex = updated.findIndex(p => String(p.issueNumber) === String(nextIssue) && p.provider === provider);
-           const newPredictionObj = generatePrediction(list, algorithm);
+           const newPredictionObj = generatePrediction(list, algorithmRef.current);
            
            if (existingPendingIndex >= 0) {
                if (newPredictionObj && updated[existingPendingIndex].status === 'PENDING') {
@@ -229,8 +254,14 @@ export function Dashboard() {
     }
   };
 
+  const fetchDataRef = useRef(fetchData);
   useEffect(() => {
-    fetchData(activeProvider);
+    fetchDataRef.current = fetchData;
+  }, [fetchData]);
+
+  useEffect(() => {
+    if (isAuthChecking) return;
+    fetchDataRef.current(activeProvider);
     
     // Sync to MMT (UTC+6:30) seconds
     const updateTimer = () => {
@@ -242,11 +273,9 @@ export function Dashboard() {
       // For a 30s game, timer resets at 0 and 30 seconds
       let remaining = 30 - (currentSeconds % 30);
       
-      // If we just hit exactly 30 seconds, or 29 seconds (1 second buffer to allow API to update and handle clock drift)
-      // We will only do it effectively once because we debounce or state will catch it, but actually setInterval is 1000ms.
-      // Easiest robust way: fetch on both 30 and 28. If 30 got old data due to API latency, 28 catches it.
+      // If we just hit exactly 30 seconds, or 28 seconds (buffer for API latency)
       if (remaining === 30 || remaining === 28) {
-        fetchData(activeProvider);
+        fetchDataRef.current(activeProviderRef.current);
       }
       
       setTimeLeft(remaining);
@@ -256,14 +285,22 @@ export function Dashboard() {
     const intervalId = setInterval(updateTimer, 1000);
 
     return () => clearInterval(intervalId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeProvider]);
+  }, [activeProvider, isAuthChecking]);
 
   // Separate effect to re-run prediction without resetting the timer
   useEffect(() => {
-    fetchData(activeProvider);
+    if (isAuthChecking) return;
+    fetchDataRef.current(activeProvider);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [algorithm]);
+  }, [algorithm, isAuthChecking]);
+
+  if (isAuthChecking) {
+    return (
+      <div className="flex bg-[#0a0a0c] min-h-screen items-center justify-center">
+        <div className="animate-spin w-8 h-8 rounded-full border-t-2 border-red-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen w-full flex-col bg-[#0a0a0c] text-[#e2e2e7] font-sans overflow-hidden select-none">
